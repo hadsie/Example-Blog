@@ -1,0 +1,52 @@
+<?php
+/**
+ * @file
+ * Code for the Example Blog feature.
+ */
+
+include_once('example_blog.features.inc');
+
+
+/**
+ * Implement hook_menu().
+ */
+function example_blog_menu() {
+  $items = array();
+  $items['admin/config/content/example_blog'] = array(
+    'title' => 'Example blog settings',
+    'description' => 'Configure the example blog',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('example_blog_admin_form'),
+    'access arguments' => array('administer site configuration'),
+  );
+  return $items;
+}
+
+function example_blog_admin_form($form_state) {
+  $form = array();
+
+  $view = views_get_view('blog_listing');
+  $view->set_display('page');
+
+  $default_items_per_page = $view->display_handler->get_option('items_per_page');
+  $form['example_blog_items_per_page'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Items per page'),
+    '#description' => t('The number of items to display per page. Enter 0 for no limit'),
+    '#default_value' => variable_get('example_blog_items_per_page', $default_items_per_page),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_views_pre_view().
+ *
+ * Set the configurable options for views.
+ */
+function example_blog_views_pre_view(&$view, &$display_id, &$args) {
+  if ($view->name == 'blog_listing' && $display_id == 'page') {
+    $default_items_per_page = $view->display_handler->get_option('items_per_page');
+    $view->display_handler->default_display->options['pager']['options']['items_per_page'] = variable_get('example_blog_items_per_page', $default_items_per_page);
+  }
+}
